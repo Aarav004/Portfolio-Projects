@@ -1,6 +1,6 @@
 /*
 Covid-19 Data Exploration
-
+Explored the data using- Joins, Aggregate Functions, Casting data types, CTEs, Temp tables, Window functions
 */
 
 SELECT * 
