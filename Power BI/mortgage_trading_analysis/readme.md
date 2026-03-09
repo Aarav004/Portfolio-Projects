@@ -172,6 +172,7 @@ WA Price = DIVIDE(SUMX(loan_data, loan_data[Price] * RELATED(loan_balance[Schedu
     SUM(loan_balance[Scheduled Principal Balance]), 0)
 ```
 <img width="307" height="108" alt="image" src="https://github.com/user-attachments/assets/4dc74cc0-a78f-46ef-87cb-7b27a91ddef5" />  
+
 >while the differences may seem small, the weighted average of price gives a truer average because of the way it considers balances. This becomes important especially on a large scale.
 
 - Create a table with counter_party, count of loan_id, sum of scheduled principal balance, WA price, sum of trade amount, and Sum of Trade Premium.
