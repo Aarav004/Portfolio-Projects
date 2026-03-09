@@ -109,6 +109,109 @@ Now  add the Trade status to the table and Using a Slicer filter for only Ready 
 
 **914.41M  scheduled principal balance is ready to trade**
 
+## Theory
+There are two types of common transactions in mortgage trades
+1. Whole loan trade
+2. Securitization
+
+**Whole loan trade** is a trade in which an investory individually bids on each mortgage.
+- This is pretty straightforward, as the investory knows exactly which mortgages they purchase.
+- However, this type of transaction is inefficient as the investor needs to analyze each loan, which can be time-consuming.
+
+**Mortgage-backed Securities (Securitization)** is the most common type of transaction seen in the mortgage capital markets.
+- With securitization, mortgage pools are bundled into a new financial asset called a mortgage backed security and the investor buys the security instead of the individual mortgage.
+- Securitizations are usually formed from mortgage pools with similar characteristics.
+  -e.g. rate, term, loan-to-value, location, or even the lender who originated the loan.
+
+Once an investory has identified which mortgage or MBS bond they want, they will place a bid on it with a price.  
+**Trade Price** is expressed as the percentage of the bond's principal balance.  
+**Trade amount** is the total dollar amount paid for the loan.  
+$\text{Trade Price} * \text{Principal Balance}  
+**Trade Premium** is the difference between the principal balance and the trade amount.  
+$\text{Trade Amount} - \text{Principal Balance}  
+*shows the extra amount the investor paid to own the mortgage*  
+
+### Bids Recieved  
+After sending our mortgage data out, counterparties are sending their best bids.  
+- load loan_bids.xlsx into power Query and reshaper it so that the bids to all be in the same column.
+- Group by loan_id with "All rows" operation.
+- Add a custom column that finds the highest price from all bids.
+  ```
+  max_price = Table.Max([All Bids], "Price")
+  ```
+- Filter out passed bids
+
+We got the highest price for each mortgage but, how do we know if this is the best price? Let's compare it against a benchmark.
+we have another option to sell these loans into Uniform Mortgage-Backed Securities (UMBS).  
+
+Merge loan_data, umbs_prices and loan_bids and include only necessary columsn which expanding. 
+
+Selling our loans to a securitizer is a much more efficient process. So we would only want to trade to whole loan counterparties if they can beat price we can get from UMBS bonds.  
+
+create a calculated column.
+```
+Benchmark Test = IF(loan_data[Price] > loan_data[umbs_price], "True", "False")
+```
+
+<img width="407" height="240" alt="image" src="https://github.com/user-attachments/assets/4598981e-b486-4690-a9c4-1ea5963b22d7" />  
+*Turns out that majority of prices we got weren't as great as we could get by selling these loans into UMBS bonds. However, we are getting a good price on over 1400 loans.*  
+
+We will calculate the trade amount and trade premium amounts to understand how much money we'll make on these trades.  
+```
+Trade Amount = RELATED(loan_balance[Scheduled Principal Balance]) * loan_data[Price]/100
+```
+```
+Trade Premium = [Trade Amount] - RELATED(loan_balance[Scheduled Principal Balance])
+```
+filter for Benchmark Test = True and add these fields to a table.
+>we can sell these loans for a premium of $15.14M. This amount is just the amount earned from the market.
+
+A **weighted-average** would give more representation to larger loans which would produce more dollar price amount, than smaller loans.
+```
+WA Price = DIVIDE(SUMX(loan_data, loan_data[Price] * RELATED(loan_balance[Scheduled Principal Balance])),
+    SUM(loan_balance[Scheduled Principal Balance]), 0)
+```
+<img width="307" height="108" alt="image" src="https://github.com/user-attachments/assets/4dc74cc0-a78f-46ef-87cb-7b27a91ddef5" />  
+>while the differences may seem small, the weighted average of price gives a truer average because of the way it considers balances. This becomes important especially on a large scale.
+
+- Create a table with counter_party, count of loan_id, sum of scheduled principal balance, WA price, sum of trade amount, and Sum of Trade Premium.
+- create a clusterd column chart with counterparty and sum of trade amount
+- create a 100% stacked bar chart with counterparty as legend and sum of trade premium on x-axix.
+  <img width="790" height="447" alt="image" src="https://github.com/user-attachments/assets/8de03fb8-a3a8-4a5b-8a15-cb11b37df404" />
+>Snells largo is contributing to less than 1% of trade premium on this transaction. With all the work and expenses it takes to draw up the contracts and execute a trade on 14 loans,it's not worth only making $65K in premium.
+
+Need to analyze how much money the company made on these loans.    
+```
+Total Loan Revenue = SUMX(loan_data, loan_data[Trade Premium] + loan_data[origition_charges])
+```
+```
+Loan Gross Profit = SUMX(loan_data, [Total Loan Revenue] - loan_data[lender_credits])
+```
+```
+Loan Profit Margin = DIVIDE([Loan Gross Profit],SUMX(loan_balance,loan_balance[Scheduled Principal Balance]),0)
+```
+>After accounting for lending fees and credits, company made 5.69% on each dollar it lent.
+ ```
+Target Profit Margin = DIVIDE(SUMX(loan_data, loan_data[target_profit]), SUMX(loan_data, loan_data[loan_amount]), 0)
+```
+>company was pricing their origination fee to make a margin of 5% per loan.
+
+Now we know that our actual Loan Profit Margin is greater than our Target Profit, we should explore why this happened. While it is great to make more money than we expected from the trade, lending is a competitive business where even a small price difference can mean the difference between winning or losing borrowers. Many borrowers will shop around at different mortgage lenders to get quotes; even a difference as small as .25% is enough to lose a potential borrower.  
+
+Create a key Influencers visual. add analyze Price and explain by loan_amount, loan to value, debt to income, median_fico_score.  
+<img width="871" height="376" alt="image" src="https://github.com/user-attachments/assets/aeea2298-26a8-4968-828a-1acfdb6457f2" />  
+
+It seems like one of the biggest influencers on price is the FICO score. This makes sense, as a higher credit score means the borrower is less likely to default, and 760 is a very good score!  
+
+## Recommendation  
+Based on our finding that median FICO scores between ove 760 had a higher margin by 72 basis points(bps) and prices are lower by 85 bps when FICO is 711 or less.  
+
+>We should create pricing groups for different ranges of Credit Scores as Scores increase the fee decreases.
+
+
+
+
+
 
 
 
