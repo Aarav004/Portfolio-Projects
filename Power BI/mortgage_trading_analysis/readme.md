@@ -208,6 +208,9 @@ Based on our finding that median FICO scores between ove 760 had a higher margin
 
 >We should create pricing groups for different ranges of Credit Scores as Scores increase the fee decreases.
 
+<img width="1141" height="642" alt="image" src="https://github.com/user-attachments/assets/7b14a112-b9e2-4329-b7bf-a3f6ca447b8d" />
+
+
 
 
 
