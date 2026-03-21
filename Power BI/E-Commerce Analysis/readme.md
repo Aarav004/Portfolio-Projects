@@ -14,7 +14,7 @@ While loading csv files we ran into an issue.
 <img width="636" height="302" alt="image" src="https://github.com/user-attachments/assets/ece7572a-03c7-4497-a4a2-d5e3aeeed18c" />  
 More than half of the rows are errors. We should find the cause and fix it. If not we could loss valuable data.  
 issue is with `Transaction Data` column. Let's try fixing it.  
--  Most of the values in the column are invalid, even though they look fine.
+-  Most of the values in the column are invalid, even though they look fine.  
   <img width="806" height="538" alt="image" src="https://github.com/user-attachments/assets/26f884f7-7418-419e-b5c7-2a043a40545b" />
 
 - lets try to change the datatype using locale.
@@ -23,7 +23,8 @@ issue is with `Transaction Data` column. Let's try fixing it.
 - Well in such case we will split the column into different columns `Year`, `Month`, `Day`, and `Time`.  
   
   <img width="1148" height="662" alt="image" src="https://github.com/user-attachments/assets/78d55a08-42d6-4e00-b4be-61c909b53f1a" />
-  *even after splitting, individual columns are still have invalid data. Let's proceed further*
+  *even after splitting individual columns are still have invalid data*.
+Let's proceed further
   
 - So, we made sure that the data type is text in between the steps to make sure that we achieve the desired output.  
 
@@ -48,11 +49,11 @@ we will use two of such metrics.
        - The total value of all sales by a customer.
        - ```Customer LTV (avg) = SUM(Sales[Sales])/[Number of Customers]```
        - The higher the customer lifetime value, the more important the customer is to the company.
+         
 Create a Map visualization using  `Number of Customers` measure and `State` variable.
 Also, Visualize Customer Lifetime value by state. Show the top 20 states by customer lifetime value.
 
-<img width="985" height="565" alt="image" src="https://github.com/user-attachments/assets/ba333858-bc7f-4f95-96db-7301895eaf23" />  
-> Neveda has one of the highest Customer LTV.
+<img width="985" height="565" alt="image" src="https://github.com/user-attachments/assets/ba333858-bc7f-4f95-96db-7301895eaf23" />   
 
 ### Products and shipping  
 It is important to know what products sell well and what type of costs mights be associated with selling those products. So, we will look at the products which are selling in higher quantities and how much total sales they are generating. We will also look into the products that have the highest shipping costs associated.  
