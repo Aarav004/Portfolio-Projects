@@ -82,7 +82,117 @@ like before filter out returned orders, and display x-axis as categorical.
 
 Most often, the company ships multiple products in a single shipment. They do a good job selling multiple product types in a single invoice.
 
+### Simple version of Market basket analysis
+Market basket analysis allows a retailer to understand customer purchasing patterns better. If they buy one specific product, what else do they buy?
+Market basket analysis is a data mining technique retailers use to increase sales by better understanding customer purchasing patterns. It helps to find products frequently bought together.  
+Let's implement simplified version of market basket visualization.  
 
+- Copy the Sales table. `Market Basket = Sales`
+- Use the 'Invoice No' to create a relationship between the `Market Basket` table and the `Sales` table.
+- Create a Table or Slicer containing the product descriptions from the `Sales` table.
+- Create a chart visual using the Description from the Market Basket table, counting the number of occurrences of the variable.
+- Alter the interactions between the two visuals, ensuring that the list filters down the information in the chart.
+
+<img width="962" height="317" alt="image" src="https://github.com/user-attachments/assets/f0809f9f-2d08-4343-9cb2-2ab2e7d3bbb5" />  
+> Earth Rated Dog Poop Bags is most often purchased along with the Pet Hair Remover.
+
+### What-if Analysis  
+The company hasn't automated integration with shipping providers and does not capture shipping costs at the transaction level. Shipping more than one quantity of an item costs on average, 70% of the cost of a single-unit shipment. There are variances based on the product.  
+We usually know that shipping a single quantity costs more.
+- Per-unit costs go down with higher shipped quantity.
+- Savings for customers and good for the environment too.
+
+Let's build the required metrics to make an interactive what-if analysis for with effective shipping rates as the quantity changes.  
+- add Shipping Cost column using shipping_cost_1000_mile to the sales table.
+  ```
+  Shipping Cost = RELATED(Products[Shipping_Cost_1000_mile])
+  ```
+- Create a new measure in the Sales table called "Shipping (Baseline)", that will sum the costs of shipping items iteratively across the Sales table.
+  ```
+  Shipping (Baseline) = SUMX(Sales,
+        IF(Sales[Quantity] = 1, Sales[Shipping Cost],
+        Sales[Shipping Cost] + (Sales[Quantity] - 1) * (Sales[Shipping Cost] * 0.7)))
+  ```
+- Create a new parameter called "What-if quantity" of integer type. Allow values from 1 to 20 in steps of one, with the current value set to five.
+
+- Create a new measure in the What-if quantity table called "Blended Shipping Cost Factor", which calculates the discounted shipping cost based on different costs for differnt quantities.
+```
+Blended Shipping Cost Factor = IF('What-if quantity'[What-if quantity Value] <=1, 1,
+IF('What-if quantity'[What-if quantity Value] <=2, 0.8,
+IF('What-if quantity'[What-if quantity Value] <=4, 0.6, 
+IF('What-if quantity'[What-if quantity Value]<= 7, 0.5,
+IF('What-if quantity'[What-if quantity Value] <=9, 0.4,
+    0.3)))))
+```
+- Create a new measure in the Sales table called "Shipping (What-if)" using `Blended Shipping Cost Factor`
+
+```
+Shipping (What-if) = SUMX(Sales,
+        IF(Sales[Quantity] = 1, Sales[Shipping Cost],
+        Sales[Shipping Cost] + ((Sales[Quantity] - 1) * (Sales[Shipping Cost] * [Blended Shipping Cost Factor]))))
+```
+- calculate the difference between the shipping (baseline) and shipping (What-if)
+  ```Shipping (Difference) = [Shipping (Baseline)] - [Shipping (What-if)]```
+<img width="362" height="72" alt="image" src="https://github.com/user-attachments/assets/6e3a83a4-688c-4b61-8c49-5d729a15ba4a" />
+> For the default value 5 of shipped quantity, total shipping costs decreased by $59095.20
+
+<img width="970" height="305" alt="image" src="https://github.com/user-attachments/assets/089de5a3-d0a9-4ec3-9e96-0d2a7a5fc387" />  
+
+- let us compare shipping costs (baseline) with a hypothetical what-if scenario. Change parameter values and see how it impacts the shipping costs.
+<img width="965" height="388" alt="image" src="https://github.com/user-attachments/assets/8b8a0155-e3b3-4625-bfa3-e1e5be3a53c2" />
+>the shipping cost savings (the difference between baseline and what-if shipping amount) for Dog and Puppy Pads when the What-if Quantity is set to 10 is $10,904
+
+- Let's create a measure to calculate cumulative shipping costs(baseline, what-if, difference).
+-  we have to sum the Shipping (Baseline) measure across the whole table, ensuring that all values are selected, and each new total is summed for a date before the max
+```
+Baseline running total = SUMX(FILTER(ALLSELECTED(sales), Sales[Transaction Date] <=MAX('Market Basket'[Transaction Date])), [Shipping (Baseline)])
+
+What-if running total = SUMX(FILTER(ALLSELECTED(sales), Sales[Transaction Date] <=MAX('Market Basket'[Transaction Date])), [Shipping (What-if)])
+
+Difference running total = SUMX(FILTER(ALLSELECTED(sales), Sales[Transaction Date] <=MAX('Market Basket'[Transaction Date])), [Shipping (Difference)])
+```
+- Let's add three cards that display the Shipping (Baseline), Shipping (What-if), and Shipping (Difference).
+- Also, let's display the running total of the three main shipping metrics over month and year in an area chart.
+
+<img width="970" height="556" alt="image" src="https://github.com/user-attachments/assets/4ea135d3-002f-42ab-9037-ef2a97cd7ac9" />  
+>the amount of savings if Pet Odor Eliminator ships seven items together is $4184.
+
+### Designing Dashboard pages  
+Lets create 3 pages
+- Executive Summary: KPIs
+- Shipping Costs: will suggest strategies to reduce costs
+- Growth Opportunities: Will provide Specific recommendations
+
+Let's calculate few KPIs
+  ```
+  COGS = Sales[Quantity] * RELATED(Products[Landed Cost])
+  Profit (Baseline) = Sales[Sales] - Sales[COGS] - [Shipping (Baseline)]
+  Profit % = SUM(Sales[Profit (Baseline)])/SUM(Sales[Sales])
+  ```
+
+An executive summary provides a quick pulse of the business operations and displays metrics such as sales, profit, and expenses. In addition, it provides an ability to drill down or filter on dimensions like product and customer location.
+
+- Add a map visual which displays total sales by state
+- Display total sales by each product
+- Add KPI as card visuals (profit %, Total sales, profit (Baseline), Shipping (Baseline)
+- Add a product slicer
+- let's also add a breakdown of profit margin by product.
+<img width="1917" height="883" alt="image" src="https://github.com/user-attachments/assets/67115a06-f33c-4135-8840-e08559cac244" />
+
+
+In the Market Basket Analysis page, create a stacked column & line chart using description, sales and profit %.
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/752611e2-a03d-42bd-ae43-1ce8ebdb19e1" />  
+
+Let's visualize shipping costs breakdown by geography and also provide recommendations on quantity upsell strategies.
+
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/bdab4d23-7bab-4158-b1c1-20eb9ad0d400" />
+
+### Recommendations
+- To increase sales and to recommend on which products should be recommended to customers on the checkout page for cross-sell promotions, use Market Basket analysis and check for each product by slicing the list of product descriptions.
+- To reduce shipping cost, refer shipping metrics page, and use slicer to decide on the shipping quantity to reduce the shipping cost for each product.
+  
+  
 
 
 
