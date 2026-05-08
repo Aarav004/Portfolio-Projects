@@ -12,9 +12,9 @@ Are more goals scored in women's international soccer matches than men's?
 
 You assume a 10% significance level, and use the following null and alternative hypotheses:
 
-H_0 : The mean number of goals scored in women's international soccer matches is the same as men's.
+- H_0 : The mean number of goals scored in women's international soccer matches is the same as men's.
 
-H_A : The mean number of goals scored in women's international soccer matches is greater than men's.
+- H_A : The mean number of goals scored in women's international soccer matches is greater than men's.
 
 
  Perform an appropriate hypothesis test to determine the p-value, and hence result, of whether to reject or fail to reject the null hypothesis that the mean number of goals scored in women's international soccer matches is the same as men's. Use a 10% significance level.
@@ -23,6 +23,12 @@ For this analysis, you'll use Official FIFA World Cup matches since 2002-01-01, 
 
 The p-value and the result of the test must be stored in a dictionary called result_dict in the form:
 
-result_dict = {"p_val": p_val, "result": result}
+```result_dict = {"p_val": p_val, "result": result}```
 
 where p_val is the p-value and result is either the string "fail to reject" or "reject", depending on the result of the test.
+
+<img width="892" height="606" alt="image" src="https://github.com/user-attachments/assets/1f46cf8c-a564-49f9-8e28-68b603559760" />  
+
+> {'p_val': 0.005106609825443641, 'result': 'reject'}
+
+> The mean number of goals scored in women's international soccer matches is greater than men's
